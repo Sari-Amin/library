@@ -1,10 +1,24 @@
+const addBookBtn = document.getElementsByClassName("add-book")[0];
+const dialog = document.getElementsByTagName("dialog")[0];
+const cancelBtn = document.getElementsByClassName("cancel")[0];
+const submitBtn = document.querySelector("[type='submit']");
+let deleteBtn = document.querySelectorAll(".delete");
+
+
+const authorVal = document.querySelector("#author");
+const titleVal = document.querySelector("#title");
+const numberOfPagesVal = document.querySelector("#pages");
+const isReadVal = document.querySelector("#read");
+const rateVal = document.querySelector("#rate");
+const table = document.getElementsByTagName("tbody")[0];
+
+
+
+
 function randomId() {
   const uint32 = window.crypto.getRandomValues(new Uint32Array(1))[0];
   return uint32.toString(16);
 }
-
-const myLibrary = [];
-
 const Book  = function(author, title, numberOfPages, isRead, rate) {
     
     this.id = randomId();
@@ -15,72 +29,116 @@ const Book  = function(author, title, numberOfPages, isRead, rate) {
     this.rate = rate
 }
 
-function addBookToLibrary(author, title, numberOfPages, isRead, rate) {
-    const newBook = new Book(author, title, numberOfPages, isRead, rate);
-    myLibrary.push(newBook);
-}
+class Library{
 
-const table = document.getElementsByTagName("tbody")[0];
+    books = [];
 
-function createTableRow(book){
+    addBookToLibrary(book) {
+        this.books.push(book);
+    }
 
-    const tableRow = document.createElement("tr");
-    if(book === undefined){
+    // addBookToLibrary(author, title, numberOfPages, isRead, rate) {
+    //     const newBook = new Book(author, title, numberOfPages, isRead, rate);
+    //     this.books.push(newBook);
+    // }
+
+    createTableRow(book){
+
+        const tableRow = document.createElement("tr");
+        if(book === undefined){
+            
+            const td = document.createElement("td");
+            td.colSpan = "5";
+            td.style["text-align"] = "center";
+            td.innerText = "No entries";
+            
+            tableRow.appendChild(td);
+            
+            return tableRow;
+        }
         
-        const td = document.createElement("td");
-        td.colSpan = "5";
-        td.style["text-align"] = "center";
-        td.innerText = "No entries";
-        
-        tableRow.appendChild(td);
+        for(let key in book){
+            if(key === "id") continue;
+            const td = document.createElement("td");
+            td.innerText = book[key];
+            if(key === "rate"){
+                td.innerHTML = `<div class = "end"><p>${book[key]}</p><button class='delete'>delete</button></div>`
+            }
+            tableRow.id = book.id;
+            tableRow.appendChild(td);
+            
+        }
+
         
         return tableRow;
     }
-    
-    for(let key in book){
-        if(key === "id") continue;
-        const td = document.createElement("td");
-        td.innerText = book[key];
-        if(key === "rate"){
-            td.innerHTML = `<div class = "end"><p>${book[key]}</p><button class='delete'>delete</button></div>`
+
+    displayBooks(){
+        if(this.books.length === 0){
+            const tableRow = this.createTableRow(undefined);
+            table.appendChild(tableRow);
+            console.log(tableRow);
         }
-        tableRow.id = book.id;
-        tableRow.appendChild(td);
-        
-    }
 
-    
-    return tableRow;
-}
-
-
-function displayBooks(){
-    if(myLibrary.length === 0){
-        const tableRow = createTableRow(undefined);
-        table.appendChild(tableRow);
-        console.log(tableRow);
-    }
-
-    for(const book of myLibrary){
-        const tableRow = createTableRow(book);
-        table.appendChild(tableRow);
-        
-    }
-}
-
-function removeBook(event){
-    const id = event.target.parentElement.parentElement.parentElement.id;
-    for (let index = 0; index < myLibrary.length; index++) {
-        if(myLibrary[index].id === id){
-            myLibrary.splice(index, 1);
-            const del = document.getElementById(`${id}`);
-            del.innerHTML = "";
+        for(const book of this.books){
+            const tableRow = this.createTableRow(book);
+            table.appendChild(tableRow);
+            
         }
     }
-    if(myLibrary.length === 0){
-        table.appendChild(createTableRow(undefined));
+
+    removeBook(event){
+        const id = event.target.parentElement.parentElement.parentElement.id;
+        for (let index = 0; index < this.books.length; index++) {
+            console.log(this.books);    
+            if(this.books[index].id === id){
+                this.books.splice(index, 1);
+                const del = document.getElementById(`${id}`);
+                del.innerHTML = "";
+            }
+        }
+        if(this.books.length === 0){
+            table.appendChild(this.createTableRow(undefined));
+        }
     }
+
+    submit(event){
+        
+        event.preventDefault();
+        
+        const newBook = new Book(
+            authorVal.value,
+            titleVal.value,
+            numberOfPagesVal.value,
+            isReadVal.value.toLowerCase() === "yes" ? true : false,
+            rateVal.value ? rateVal.value : 0
+        );
+
+        this.books.push(newBook);
+        if(this.books.length == 1){
+            table.innerHTML = "";
+        }
+        const tableRow = this.createTableRow(newBook);
+        table.appendChild(tableRow);
+
+        deleteBtn = document.querySelectorAll(".delete");
+        
+        deleteBtn.forEach((button)=>{
+        button.addEventListener("click", (event)=>{
+
+            this.removeBook(event);
+        });
+        });
+
+        dialog.close();
+    }
+
 }
+
+
+
+const myLibrary = new Library();
+
 
 const b1 = new Book("Robert C. Martin", "Clean Code", 464, true, 4.7);
 const b2 = new Book("Eric Evans", "Domain-Driven Design", 560, false, 0);
@@ -88,21 +146,17 @@ const b3 = new Book("Martin Fowler", "Refactoring", 448, true, 4.5);
 const b4 = new Book("Gayle Laakmann McDowell", "Cracking the Coding Interview", 687, true, 4.8);
 const b5 = new Book("Andrew S. Tanenbaum", "Computer Networks", 960, false, 0);
 
+console.log(myLibrary.books);
+myLibrary.addBookToLibrary(b1);
+myLibrary.addBookToLibrary(b2);
+myLibrary.addBookToLibrary(b3);
+myLibrary.addBookToLibrary(b4);
+myLibrary.addBookToLibrary(b5);
+console.log(myLibrary.books);
 
-myLibrary.push(...[b1,b2,b3,b4,b5]);
 
-displayBooks();
+myLibrary.displayBooks();
 
-const addBookBtn = document.getElementsByClassName("add-book")[0];
-const dialog = document.getElementsByTagName("dialog")[0];
-const cancelBtn = document.getElementsByClassName("cancel")[0];
-const submitBtn = document.querySelector("[type='submit']");
-
-const authorVal = document.querySelector("#author");
-const titleVal = document.querySelector("#title");
-const numberOfPagesVal = document.querySelector("#pages");
-const isReadVal = document.querySelector("#read");
-const rateVal = document.querySelector("#rate");
 
 
 
@@ -114,39 +168,21 @@ cancelBtn.addEventListener("click", ()=>{
     dialog.close();
 });
 
-let deleteBtn = document.querySelectorAll(".delete");
 
 
-function submit(event){
-    
-    event.preventDefault();
-    
-    const newBook = new Book(
-        authorVal.value,
-        titleVal.value,
-        numberOfPagesVal.value,
-        isReadVal.value.toLowerCase() === "yes" ? true : false,
-        rateVal.value ? rateVal.value : 0
-    );
 
-    myLibrary.push(newBook);
-    if(myLibrary.length == 1){
-        table.innerHTML = "";
-    }
-    const tableRow = createTableRow(newBook);
-    table.appendChild(tableRow);
 
-    deleteBtn = document.querySelectorAll(".delete");
-    
-    deleteBtn.forEach((button)=>{
-    button.addEventListener("click", removeBook);
-    });
+submitBtn.addEventListener("click", (event)=>{
+    myLibrary.submit(event);
+});
 
-    dialog.close();
-}
 
-submitBtn.addEventListener("click", submit);
+
+deleteBtn = document.querySelectorAll(".delete");
+
 
 deleteBtn.forEach((button)=>{
-    button.addEventListener("click", removeBook);
+    button.addEventListener("click", (event) => {
+        myLibrary.removeBook(event);
+    });
 });
